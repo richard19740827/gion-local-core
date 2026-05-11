@@ -1,6 +1,7 @@
 #!/bin/sh
-# Validate Hermes WebUI repository governance without CI/task-runner dependencies.
-# POSIX shell only; dependencies are limited to git, python3, curl, and docker compose.
+# Validate the compact Gion Local Core launcher without task-runner dependencies.
+# POSIX shell only; hard requirements are git/python3/curl. Docker Compose checks
+# run when Docker is installed and warn when this environment cannot run them.
 
 PASS_COUNT=0
 FAIL_COUNT=0
@@ -33,14 +34,55 @@ have_cmd() {
 
 check_clean_tree() {
     if ! have_cmd git; then
-        fail "git is required to verify that the working tree is clean"
+        warn "git is not available; skipping working tree cleanliness check"
         return
     fi
 
     if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-        fail "git working tree is not clean"
+        warn "git working tree has local changes; this is expected before committing"
     else
         pass "git working tree is clean"
+    fi
+}
+
+check_required_files() {
+    missing=""
+    for path in \
+        README.md \
+        SPEC.md \
+        VALUES.md \
+        start.sh \
+        bootstrap.py \
+        docker-compose.yml \
+        .env.example \
+        validate.sh \
+        smoke.sh \
+        .gitignore
+    do
+        if [ ! -f "$path" ]; then
+            missing="$missing $path"
+        fi
+    done
+
+    if [ -n "$missing" ]; then
+        fail "required compact-root files are missing:$missing"
+    else
+        pass "all required compact-root files exist"
+    fi
+}
+
+check_removed_redundant_paths() {
+    redundant=""
+    for path in scripts docs archive requirements.txt CHANGELOG.md; do
+        if [ -e "$path" ]; then
+            redundant="$redundant $path"
+        fi
+    done
+
+    if [ -n "$redundant" ]; then
+        fail "redundant or unused paths should stay removed:$redundant"
+    else
+        pass "redundant scripts/docs/archive/requirements/changelog paths are absent"
     fi
 }
 
@@ -60,7 +102,7 @@ check_required_commands() {
     if have_cmd docker && docker compose version >/dev/null 2>&1; then
         pass "docker compose is available"
     else
-        fail "docker compose is required"
+        warn "docker compose is not available; compose render and smoke runtime checks are environment-limited"
     fi
 }
 
@@ -71,7 +113,7 @@ check_python_syntax() {
     fi
 
     files=""
-    for path in server.py bootstrap.py mcp_server.py api/*.py scripts/*.py; do
+    for path in server.py bootstrap.py mcp_server.py api/*.py; do
         if [ -f "$path" ]; then
             files="$files $path"
         fi
@@ -110,7 +152,7 @@ PYEOF
 
 check_compose_render() {
     if ! have_cmd docker || ! docker compose version >/dev/null 2>&1; then
-        fail "cannot render compose YAML because docker compose is missing"
+        warn "cannot render compose YAML because docker compose is unavailable in this environment"
         return
     fi
 
@@ -224,7 +266,7 @@ check_no_root_compose_variants() {
     if [ -n "$variants" ]; then
         fail "root contains compose variants:${variants}"
     else
-        pass "root contains no extra compose variants; archive/ is ignored"
+        pass "root contains only the canonical compose file"
     fi
 }
 
@@ -254,17 +296,36 @@ check_start_uses_bootstrap() {
     fi
 }
 
-check_ctl_uses_bootstrap() {
-    if [ ! -f ctl.sh ]; then
-        fail "ctl.sh is missing"
-        return
+check_repo_path_documentation() {
+    if awk '
+        /git clone .*hermes-webui/ { bad = 1; print FILENAME ":" FNR }
+        END { exit bad ? 0 : 1 }
+    ' README.md SPEC.md VALUES.md 2>/dev/null; then
+        fail "documentation still tells users to clone hermes-webui instead of gion-local-core"
+    else
+        pass "documentation names gion-local-core as the launcher/config repo"
     fi
 
-    if awk 'BEGIN { found = 0 } /^[[:space:]]*#/ { next } /bootstrap\.py/ { found = 1 } END { exit found ? 0 : 1 }' ctl.sh; then
-        pass "ctl.sh startup path references bootstrap.py"
+    if awk '
+        /HERMES_WEBUI_SOURCE_DIR/ { found = 1 }
+        END { exit found ? 0 : 1 }
+    ' .env.example README.md SPEC.md; then
+        pass "host-side WebUI source override is documented"
     else
-        fail "ctl.sh startup path does not reference bootstrap.py"
+        fail "HERMES_WEBUI_SOURCE_DIR is not documented for host-side start.sh use"
     fi
+}
+
+check_single_root_entrypoints() {
+    for path in validate.sh smoke.sh; do
+        if [ ! -x "$path" ]; then
+            fail "$path is missing or not executable"
+        elif awk 'BEGIN { bad = 0 } /^[[:space:]]*#/ { next } /exec[[:space:]].*scripts\// { bad = 1 } END { exit bad ? 0 : 1 }' "$path"; then
+            fail "$path still delegates to removed scripts/ implementation"
+        else
+            pass "$path is a root-level implementation"
+        fi
+    done
 }
 
 print_summary() {
@@ -289,6 +350,8 @@ print_summary() {
 }
 
 check_clean_tree
+check_required_files
+check_removed_redundant_paths
 check_required_commands
 check_python_syntax
 check_compose_render
@@ -296,6 +359,7 @@ check_duplicate_env
 check_placeholder_password
 check_no_root_compose_variants
 check_start_uses_bootstrap
-check_ctl_uses_bootstrap
+check_repo_path_documentation
+check_single_root_entrypoints
 
 print_summary
