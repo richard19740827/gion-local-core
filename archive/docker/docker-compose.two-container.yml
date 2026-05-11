@@ -1,3 +1,6 @@
+# ARCHIVED EXPERIMENT — not a supported main-branch install source.
+# Keep only for historical evaluation; use ../../docker-compose.yml for installs.
+#
 # Two-container Docker Compose: Hermes Agent + Hermes WebUI
 #
 # QUICK START:
