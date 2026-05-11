@@ -1,16 +1,20 @@
 # Hermes Web UI
 
-[Hermes Agent](https://hermes-agent.nousresearch.com/) is a sophisticated autonomous agent that lives on your server, accessed via a terminal or messaging apps, that remembers what it learns and gets more capable the longer it runs.
+[Hermes Agent](https://hermes-agent.nousresearch.com/) 是一個複雜的自主代理，它存在於您的伺服器上，透過終端或訊息傳遞應用程式訪問，它記住它所學的內容，並且越跑越久，能力就越強.
 
-Hermes WebUI is a lightweight, dark-themed web app interface in your browser for [Hermes Agent](https://hermes-agent.nousresearch.com/).
-Full parity with the CLI experience - everything you can do from a terminal,
-you can do from this UI. No build step, no framework, no bundler. Just Python
-and vanilla JS.
+Hermes WebUI是瀏覽器中一個輕量級的黑暗主題網路應用程式介面 [Hermes Agent](https://hermes-agent.nousresearch.com/).
+與CLI體驗完全平等——您可以在終端上完成的一切，
 
-Layout: three-panel. Left sidebar for sessions and navigation, center for chat,
-right for workspace file browsing. Model, profile, and workspace controls live in
-the **composer footer** — always visible while composing. A circular context ring
-shows token usage at a glance. All settings and session tools are in the
+你可以透過這個使用者介面完成。 沒有構建步驟，沒有框架，沒有捆綁器。 只是蟒蛇
+
+和香草JS.
+
+佈局：三面板。 會話和導航的左側邊欄，聊天中心，
+
+適合工作區檔案瀏覽。 模型、配置檔案和工作區控制在
+the **composer footer** — always 作曲時可見。 迴圈上下文環
+
+一目瞭然地顯示令牌的使用情況。 所有設定和會話工具都在
 **Hermes Control Center** (launcher at the sidebar bottom).
 
 <img width="2448" height="1748" alt="Hermes Web UI — three-panel layout" src="https://github.com/user-attachments/assets/6bf8af4c-209d-441e-8b92-6515d7a0c369" />
@@ -41,29 +45,35 @@ shows token usage at a glance. All settings and session tools are in the
   </tr>
 </table>
 
-This gives you nearly **1:1 parity with Hermes CLI from a convenient web UI** which you can access securely through an SSH tunnel from your Hermes setup. Single command to start this up, and a single command to SSH tunnel for access on your computer. Every single part of the web UI uses your existing Hermes agent and existing models, without requiring any additional setup.
+This gives you nearly **1:1 parity with Hermes CLI from a convenient web UI** 您可以透過Hermes設定的SSH隧道安全地訪問。 啟動此操作的單個命令，以及在計算機上訪問SSH隧道的單個命令。 網路使用者介面的每個部分都使用您現有的Hermes代理和現有模型，無需任何額外的設定。
 
 ---
 
 ## Why Hermes
 
-Most AI tools reset every session. They don't know who you are, what you worked on, or what
-conventions your project follows. You re-explain yourself every time.
+大多數人工智慧工具在每次會話中都會重置。 他們不知道你是誰，你做了什麼，或者什麼
 
-Hermes retains context across sessions, runs scheduled jobs while you're offline, and gets
-smarter about your environment the longer it runs. It uses your existing Hermes agent setup,
-your existing models, and requires no additional configuration to start.
+你的專案遵循的慣例。 你每次都會重新解釋自己。
 
-What makes it different from other agentic tools:
+愛馬仕跨會話保留上下文，在您離線時執行計劃作業，並獲取
+
+執行的時間越長，你的環境就越聰明。 它使用您現有的愛馬仕代理設定，
+
+您現有的模型，無需額外的配置即可啟動。
+
+是什麼讓它與其他代理工具不同：
 
 - **Persistent memory** — user profile, agent notes, and a skills system that saves reusable
   procedures; Hermes learns your environment and does not have to relearn it
-- **Self-hosted scheduling** — cron jobs that fire while you're offline and deliver results to
-  Telegram, Discord, Slack, Signal, email, and more
-- **10+ messaging platforms** — the same agent available in the terminal is reachable from your phone
-- **Self-improving skills** — Hermes writes and saves its own skills automatically from experience;
-  no marketplace to browse, no plugins to install
-- **Provider-agnostic** — OpenAI, Anthropic, Google, DeepSeek, OpenRouter, and more
+- **Self-hosted scheduling** — 在您離線時觸發的cron作業，並提供結果
+
+Telegram、Discord、Slack、Signal、電子郵件等
+
+- **10多個訊息平臺** — 終端中可用的同一代理可以從您的手機聯絡到
+- **Self-improving skills** — Hermes根據經驗自動編寫和儲存自己的技能；
+
+沒有市場可以瀏覽，沒有外掛可以安裝
+- **Provider-agnostic** — OpenAI、Anthropic、Google、DeepSeek、OpenRouter等
 - **Orchestrates other agents** — can spawn Claude Code or Codex for heavy coding tasks and bring
   the results back into its own memory
 - **Self-hosted** — your conversations, your memory, your hardware
@@ -86,9 +96,11 @@ What makes it different from other agentic tools:
 
 **The closest competitor is OpenClaw** — both are always-on, self-hosted, open-source agents
 with memory, cron, and messaging. The key differences: Hermes writes and saves its own skills
-automatically as a core behavior (OpenClaw's skill system centers on a community marketplace);
-Hermes is more stable across updates (OpenClaw has documented release regressions and ClawHub
-has had security incidents involving malicious skills); and Hermes runs natively in the Python
+自動作為核心行為（OpenClaw的技能系統以社群市場為中心）；
+
+Hermes在更新中更加穩定（OpenClaw記錄了釋出迴歸和ClawHub
+
+發生了涉及惡意技能的安全事件）；Hermes在Python中原生執行
 ecosystem. See [HERMES.md](HERMES.md) for the full side-by-side.
 
 ---
@@ -132,7 +144,7 @@ The bootstrap will:
 > Native Windows is not supported for this bootstrap yet. Use Linux, macOS, or WSL2.
 > For Windows / WSL auto-start at login, see [`docs/wsl-autostart.md`](docs/wsl-autostart.md).
 
-If provider setup is still incomplete after install, the onboarding wizard will point you to finish it with `hermes model` instead of trying to replicate the full CLI setup in-browser.
+如果安裝後提供商設定仍然不完整，入職嚮導將指示您使用「hermes model」完成它，而不是嘗試在瀏覽器中複製完整的CLI設定。
 
 ---
 
