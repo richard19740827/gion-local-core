@@ -23,6 +23,7 @@ main branch 必須保留下列檔案：
 
 - `README.md`
 - `SPEC.md`
+- `VALUES.md`
 - `start.sh`
 - `bootstrap.py`
 - `requirements.txt`
@@ -36,7 +37,18 @@ main branch 必須保留下列檔案：
 - `archive/docker/docker-compose.two-container.yml`
 - `archive/docker/docker-compose.three-container.yml`
 
-## 3. Data model
+## 3. Values model
+
+本專案的核心理念保存在 `VALUES.md`。所有正式文件、安裝流程、驗證腳本與 archive policy 都應盡量符合以下方向：
+
+1. 不是商業化，而是自主性。
+2. 不是剝削，而是共生。
+3. 不是控制，而是協作。
+4. 不是追求，而是傳承。
+
+`VALUES.md` 是價值指南，不是法律人格、財務承諾或自動化授權；任何涉及金錢、法律、醫療、心理支持或重大決策的功能，都必須保留人類責任與監督。
+
+## 4. Data model
 
 主機上唯一預設資料根目錄：
 
@@ -64,7 +76,7 @@ WebUI state/history：
 /home/hermeswebui/.hermes/webui_history
 ```
 
-## 4. Network model
+## 5. Network model
 
 `docker-compose.yml` 必須預設使用 localhost-only port publishing：
 
@@ -75,7 +87,7 @@ ports:
 
 容器內服務可監聽 `0.0.0.0`，但 host publish 不得預設暴露至所有網卡。
 
-## 5. Environment model
+## 6. Environment model
 
 `.env.example` 必須可作為 `.env` 起點，且不得包含啟用中的 placeholder password。
 
@@ -87,7 +99,7 @@ HERMES_WEBUI_PASSWORD=<strong-password>
 
 並明確修改 compose port binding；此情境超出預設安全模型。
 
-## 6. Archive policy
+## 7. Archive policy
 
 `archive/` 是 historical reference，不是 install source。
 
@@ -103,7 +115,7 @@ HERMES_WEBUI_PASSWORD=<strong-password>
 - smoke test canonical runtime。
 - main branch 預設安裝流程。
 
-## 7. Validation policy
+## 8. Validation policy
 
 `./validate.sh` 至少應檢查：
 
@@ -116,7 +128,7 @@ HERMES_WEBUI_PASSWORD=<strong-password>
 
 `./smoke.sh` 應使用 temporary `HERMES_HOME` 與 `HERMES_WORKSPACE`，避免污染使用者正式資料。
 
-## 8. Security policy
+## 9. Security policy
 
 - `.env`、資料庫、憑證、cache 與 runtime state 不得提交。
 - WebUI 預設只綁定 localhost。
