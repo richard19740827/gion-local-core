@@ -605,101 +605,39 @@ Three interlocking improvements: workspace fallback resolution so the server rec
 
 ### Feature contributions
 
-**[@gabogabucho](https://github.com/gabogabucho)** — Spanish locale + onboarding wizard (PRs #275, #285)
-Full Spanish (`es`) locale covering all 175 UI strings, plus the one-shot bootstrap onboarding wizard that guides new users through provider setup on first launch — the feature most responsible for new users actually getting started.
+**[@gabogabucho](https://github.com/gabogabucho)** — Spanish locale + onboarding 嚮導（PRs #275，#285）
 
-**[@bergeouss](https://github.com/bergeouss)** — Provider management UI + gateway sync + Docker hardening (18 PRs, `v0.50.49` → `v0.50.240`)
-Real-time gateway session sync (Telegram/Discord/Slack into the WebUI sidebar via SSE), the provider management UI for adding/editing custom providers from Settings, the two-container Docker setup docs, OAuth provider status detection, profile isolation hardening (per-profile `.env` secrets), and the bulk of what users see when they touch Settings → Providers.
+最初的三個社群PR：修復了EventSource/fetch，以使用URL來源進行反向代理設定，從配置中更正模型提供商路由，並添加了帶有dvh視口修復的移動響應佈局。 早期基礎工作。
 
-**[@ccqqlo](https://github.com/ccqqlo)** — Terminal approval UX + custom model discovery + mobile close button (PRs #224, #225, #238, #333)
-A run of focused quality-of-life improvements: terminal tool approval prompts that stay visible long enough to actually be read, restored custom model API key discovery, and the redundant mobile close button fix that had been confusing users on narrow screens.
+###錯誤修復和安全貢獻
 
-**[@kevin-ho](https://github.com/kevin-ho)** — OLED theme (PR #168)
-Added the 7th built-in theme: pure black backgrounds with warm accents tuned to reduce burn-in risk. Small diff, big impact for anyone on an OLED display.
+**[@Hinotoi-agent](https://github.com/Hinotoi-agent)** — 個人資料.env秘密隔離（PR #351）
 
-**[@Bobby9228](https://github.com/Bobby9228)** — Mobile Profiles button + Android Chrome fixes (PRs #253, #263, #265)
-Added the Profiles entry to the mobile navigation flow, making profile switching reachable on phones, plus a set of Android Chrome-specific fixes for the profile dropdown.
+修復了交換機上配置檔案之間的API金鑰洩漏——從帶有「OPENAI_API_KEY」的配置檔案切換到沒有它的配置檔案，在會話期間將金鑰留在流程環境中，有效地洩露了憑據。 一個微妙而重要的安全修復。
 
-**[@franksong2702](https://github.com/franksong2702)** — Most prolific external contributor (22 PRs, `v0.50.49` → `v0.50.245`)
-The session title guard, breadcrumb workspace navigation, mobile workspace panel sliver fix (#1300), composer footer container queries, streaming session sidebar exemption (#1327), session sidecar repair, cron output preservation (#1295), profile default workspace persistence, and a long tail of polish across the session sidebar, mobile responsive layout, and workspace state machine.
+**[@Lawrencel1ng](https://github.com/lawrencel1ng)** — 強盜安全修復B310/B324/B110 + QuietHTTPServer（PR #354）
 
-**[@betamod](https://github.com/betamod)** — Security hardening (PR #171)
-A comprehensive security audit PR covering CSRF protection, SSRF guards, XSS escaping improvements, and the env race condition between concurrent agent sessions — foundational security work that shipped in v0.39.0.
+系統的強盜安全掃描修復：在「urlopen」之前進行URL方案驗證，MD5「usedforsecurity=False」，以及40多個裸「except: pass」塊被替換為適當的日誌記錄——加上「QuietHTTPServer」，以阻止來自SSE流的客戶端斷開日誌垃圾郵件。
+**[@lx3133584]（Https://github.com/lx3133584）** — 非標準埠上反向代理的CSRF修復（PR #360）
 
-**[@TaraTheStar](https://github.com/TaraTheStar)** — Bot name + thinking blocks + login refactor (PRs #132, #176, #181)
-Made the assistant display name configurable throughout the UI, added thinking/reasoning block display in chat, and refactored the login page to use template variables instead of inline string replacement.
+修復了在非標準埠上Nginx代理管理器或類似部署的CSRF拒絕問題——對於在80/443以外的埠上託管的任何人來說，這是一個現實世界的障礙。
 
-**[@thadreber-web](https://github.com/thadreber-web)** — CLI session bridge (PR #56)
-The original CLI session bridge: reads CLI sessions from the agent's SQLite state store and surfaces them in the WebUI sidebar. This was the first bridge between the CLI and WebUI session worlds.
+**[@DelightRun](https://github.com/DelightRun)** — WebUI會話的session_search修復（PR #356）
 
-**[@deboste](https://github.com/deboste)** — Reverse proxy auth + mobile responsive layout + model routing (PRs #3, #4, #5)
-Three of the very first community PRs: fixed EventSource/fetch to use the URL origin for reverse proxy setups, corrected model provider routing from config, and added mobile responsive layout with dvh viewport fix. Early foundation work.
+「session_search」工具在每個WebUI會話中都無聲地返回「會話資料庫不可用」。 追蹤了流路徑中缺失的「SessionDB」注入，並修復了它。
 
-### Bug fix and security contributions
+**[@Shaoxianbilly](https://github.com/shaoxianbilly)** — Unicode檔名下載（PR #378）
 
-**[@Hinotoi-agent](https://github.com/Hinotoi-agent)** — Profile .env secret isolation (PR #351)
-Fixed API key leakage between profiles on switch — switching from a profile with `OPENAI_API_KEY` to one without it left the key in the process environment for the duration of the session, effectively leaking credentials. A subtle and important security fix.
+修復了下載中文、日語或其他非ASCII名稱的工作區檔案時的「UnicodeEncodeError」崩潰。 使用RFC 5987 `filename*=UTF-8''...`編碼實現適當的`Content-Disposition`標題。
 
-**[@lawrencel1ng](https://github.com/lawrencel1ng)** — Bandit security fixes B310/B324/B110 + QuietHTTPServer (PR #354)
-Systematic bandit security scan fixes: URL scheme validation before `urlopen`, MD5 `usedforsecurity=False`, and 40+ bare `except: pass` blocks replaced with proper logging — plus `QuietHTTPServer` to stop client-disconnect log spam from SSE streams.
+**[@Huangzt](https://github.com/huangzt)** — 取消中斷代理（PR #244）
 
-**[@lx3133584](https://github.com/lx3133584)** — CSRF fix for reverse proxy on non-standard ports (PR #360)
-Fixed CSRF rejection for deployments behind Nginx Proxy Manager or similar on non-standard ports — a real-world blocker for anyone hosting on a port other than 80/443.
+使「取消」按鈕實際上中斷了正在執行的代理並清理了UI狀態，而不僅僅是在代理繼續執行時隱藏了按鈕。
 
-**[@DelightRun](https://github.com/DelightRun)** — session_search fix for WebUI sessions (PR #356)
-The `session_search` tool silently returned "Session database not available" in every WebUI session. Tracked down the missing `SessionDB` injection in the streaming path and fixed it.
+**[@Tgaalman](https://github.com/tgaalman)** — 思考卡修復（PR #169）
 
-**[@shaoxianbilly](https://github.com/shaoxianbilly)** — Unicode filename downloads (PR #378)
-Fixed `UnicodeEncodeError` crashes when downloading workspace files with Chinese, Japanese, or other non-ASCII names. Implemented proper `Content-Disposition` header with RFC 5987 `filename*=UTF-8''...` encoding.
+修復了思維卡顯示中遺漏的頂級推理欄位——克勞德的擴充套件思維塊如何在API響應中浮出水面的邊緣案例。
 
-**[@huangzt](https://github.com/huangzt)** — Cancel interrupts agent (PR #244)
-Made the Cancel button actually interrupt the running agent and clean up UI state, rather than just hiding the button while the agent kept running.
+**[@Smurmann](https://github.com/smurmann)** — 自定義提供商路由修復（PR #189）
 
-**[@tgaalman](https://github.com/tgaalman)** — Thinking card fix (PR #169)
-Fixed top-level reasoning fields being missed in the thinking card display — an edge case in how Claude's extended thinking blocks surface in the API response.
-
-**[@smurmann](https://github.com/smurmann)** — Custom provider routing fix (PR #189)
-Fixed model routing for slash-prefixed custom provider models, which were being misrouted in the model selector. A precise fix for a real edge case in multi-provider setups.
-
-**[@jeffscottward](https://github.com/jeffscottward)** — Claude Haiku model ID fix (PR #145)
-Caught and corrected the Claude Haiku model ID (`3-5` → `4-5`) immediately after the Anthropic release — the kind of quick community catch that keeps the model dropdown accurate.
-
-**[@kcclaw001](https://github.com/kcclaw001)** — Credential redaction in API responses (PR #243)
-Added credential redaction to all API response paths so API keys, tokens, and other secrets in session data or error messages are masked before reaching the browser.
-
-**[@mbac](https://github.com/mbac)** — Phantom "Custom" provider group fix (PR #191)
-Removed the phantom "Custom" optgroup that appeared in the model dropdown even when no custom provider was configured — a small but consistently confusing UI noise issue.
-
-**[@andrewy-wizard](https://github.com/andrewy-wizard)** — Chinese localization (PR #177)
-Added Simplified Chinese (`zh`) locale to the WebUI. One of the first non-English locales and the most-used non-English locale in the codebase.
-
-**[@mmartial](https://github.com/mmartial)** — Docker UID/GID matching (PR #237)
-Added Docker support for running as an arbitrary UID/GID matching the host user, eliminating permission issues with bind-mounted volumes — essential for Docker deployments where the host user isn't UID 1000.
-
-**[@vCillusion](https://github.com/vCillusion)** — pip package resolution fix (PR #76)
-Fixed agent dependency resolution to prefer packages from the venv's site-packages over the agent directory itself, preventing shadowing bugs when developing locally.
-
-**[@carlytwozero](https://github.com/carlytwozero)** — API key pass-through for non-Anthropic providers (PR #78)
-Fixed `api_key` not being passed to `AIAgent` for non-Anthropic `/anthropic` providers — a quiet regression that silently broke any non-default provider.
-
-**[@mangodxd](https://github.com/mangodxd)** — Type hints cleanup (PR #115)
-Added missing type hints across 10 files and corrected 9 inaccurate existing ones — the kind of maintenance work that makes the codebase easier to reason about.
-
-**[@Argonaut790](https://github.com/Argonaut790)** — HTML entity decode + Traditional Chinese locale (PR #239)
-Fixed double-escaping of HTML entities in `renderMd()` — LLM output containing `&lt;code&gt;` was being escaped a second time, rendering as literal text instead of the intended markdown. The same PR also completed the Simplified Chinese translation (40+ missing keys) and added a full Traditional Chinese (`zh-Hant`) locale.
-
-**[@indigokarasu](https://github.com/indigokarasu)** — Visual redesign proposal: icon rail + design token system + 7 themes (PR #213)
-A CSS-only redesign of the full UI — proper design tokens (`--bg-primary`, `--text-info`, spacing scale), an icon rail sidebar replacing the emoji tab strip, consistent form cards, breadcrumb nav, and 7 built-in themes as custom properties. The PR didn't merge as-is but directly shaped the design language and theme architecture that shipped in v0.50.0.
-
-**[@zenc-cp](https://github.com/zenc-cp)** — Anti-hallucination guard for ReAct loop (PR #133)
-Added a streaming token buffer and post-run message scrub to `streaming.py` to detect and strip fake tool execution JSON that weaker models write inline instead of calling tools properly. A three-layer approach: ephemeral anti-hallucination prompt, live token filtering, and session history cleanup. The pattern influenced later streaming.py improvements.
-
----
-
-Want to contribute? See [ARCHITECTURE.md](ARCHITECTURE.md) for the codebase layout and [TESTING.md](TESTING.md) for how to run the test suite. The best contributions are focused, well-tested, and solve a real problem — exactly what every person on this list did.
-
-## Repo
-
-```
-git@github.com:nesquena/hermes-webui.git
-```
+「」
