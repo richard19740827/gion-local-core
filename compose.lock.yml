@@ -7,7 +7,7 @@ services:
     environment:
       HERMES_WEBUI_HOST: 0.0.0.0
       HERMES_WEBUI_PORT: "8787"
-      HERMES_WEBUI_STATE_DIR: /home/hermeswebui/.hermes/webui
+      HERMES_WEBUI_STATE_DIR: /Users/max/hermes-webui
       WANTED_GID: "1000"
       WANTED_UID: "1000"
     networks:
@@ -21,8 +21,8 @@ services:
     restart: unless-stopped
     volumes:
       - type: bind
-        source: /Users/max/Hermes_Gion_Core
-        target: /home/hermeswebui/.hermes
+        source: /Users/max/gion-local-core
+        target: /Users/max/hermes-webui
         bind: {}
       - type: bind
         source: /Users/max/workspace
