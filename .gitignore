@@ -244,3 +244,25 @@ cache/
 # Temporary
 tmp/
 temp/
+
+# Gion / Hermes local secrets and runtime state
+.env.*
+!.env.example
+Hermes_Gion_Core/
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.pem
+*.key
+*.crt
+*.p12
+*.token
+.signing_key
+webui_history/
+storage/
+data/
+cache/
+logs/
+tmp/
+temp/
