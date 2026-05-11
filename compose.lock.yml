@@ -1,33 +1,50 @@
 name: gion-local-core
+
 services:
   hermes-webui:
     build:
       context: /Users/max/gion-local-core
       dockerfile: Dockerfile
+    container_name: gion-core-app
     environment:
-      HERMES_WEBUI_HOST: 0.0.0.0
-      HERMES_WEBUI_PORT: "8787"
-      HERMES_WEBUI_STATE_DIR: /Users/max/hermes-webui
-      WANTED_GID: "1000"
-      WANTED_UID: "1000"
-    networks:
-      default: null
+      # 【關鍵 1】告訴容器：你的家目錄就在這裡
+      # 因為下面的 volumes 會把您的 Core 目錄掛載到這個位置
+      - HERMES_HOME=/home/hermeswebui/.hermes
+      
+      # WebUI 設定
+      - HERMES_WEBUI_HOST=0.0.0.0
+      - HERMES_WEBUI_PORT=8787
+      # 狀態也存這裡
+      - HERMES_WEBUI_STATE_DIR=/home/hermeswebui/.hermes/webui-state
+      
+      # 【關鍵 2】macOS 權限修正 (UID 501, GID 20)
+      # 如果不改回 501，容器會因為權限不足無法寫入您的資料夾，轉而建立隱藏檔
+      - WANTED_UID=501
+      - WANTED_GID=20
+      
     ports:
-      - mode: ingress
-        host_ip: 127.0.0.1
-        target: 8787
-        published: "8787"
-        protocol: tcp
+      - "127.0.0.1:8787:8787"
     restart: unless-stopped
+    
     volumes:
+      # 【關鍵 3】特洛伊木馬戰術
+      # 來源：您的本地 Core 專案
+      # 目標：容器內的預設 .hermes 路徑
+      # 這樣容器會以為自己在寫入 ~/.hermes，實際上是直接寫入您的 gion-local-core
       - type: bind
         source: /Users/max/gion-local-core
-        target: /Users/max/hermes-webui
-        bind: {}
+        target: /home/hermeswebui/.hermes
+
+      # 您的 WebUI 專案目錄 (選用)
+      - type: bind
+        source: /Users/max/hermes-webui
+        target: /workspace
+
+      # 工作區
       - type: bind
         source: /Users/max/workspace
         target: /workspace
-        bind: {}
+
 networks:
   default:
     name: gion-local-core_default
