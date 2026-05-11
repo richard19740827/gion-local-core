@@ -1,0 +1,2 @@
+# Gion Local Core host-side helpers use only the Python standard library.
+# Docker deployments use dependencies bundled in the selected container image.
