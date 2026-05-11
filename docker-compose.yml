@@ -1,54 +1,26 @@
-# Hermes WebUI — single-container Docker Compose
-
-# QUICK START (most users):
-#   1. (Optional) Copy .env.docker.example to .env and edit values
-#   2. docker compose up -d
-#   3. Open http://localhost:8787
-
-# This is the simplest setup: one WebUI container that runs the agent in-process.
-# The WebUI auto-detects host UID/GID from the mounted .hermes volume.
-
-# Archived multi-container experiments live under archive/docker/ for history only.
-# They are not supported install sources for main branch.
+# Gion Local Core — canonical single-container Docker Compose.
+# Multi-container experiments are archived under archive/docker/ and are not
+# supported install sources for main branch.
 
 services:
   hermes-webui:
-    build: .
+    image: ${HERMES_WEBUI_IMAGE:-ghcr.io/nesquena/hermes-webui:latest}
     ports:
-      # Localhost-only for the single-user local Docker setup.
-      - "127.0.0.1:8787:8787"
+      # Localhost-only by default. Do not remove 127.0.0.1 unless you also set
+      # HERMES_WEBUI_PASSWORD and understand the network exposure.
+      - "127.0.0.1:${HERMES_WEBUI_PORT:-8787}:8787"
     volumes:
-      # 1. 核心家園：掛載您在 Finder 看到的 Hermes_Gion_Core
       - ${HERMES_HOME:-${HOME}/Hermes_Gion_Core}:/home/hermeswebui/.hermes
-
-      # 2. 公益工作區：掛載家園裡的專案資料夾
       - ${HERMES_WORKSPACE:-${HOME}/Hermes_Gion_Core/Public_Welfare_Project}:/workspace
     environment:
-      # --- 祇園家園路徑對齊 ---
-      # 確保記憶存入透明資料夾中的 webui_history
       - HERMES_WEBUI_STATE_DIR=/home/hermeswebui/.hermes/webui_history
-
-      # 預設工作區直接鎖定在公益專案
       - HERMES_WEBUI_DEFAULT_WORKSPACE=/workspace
-
-      # --- 系統連線與權限設定 ---
-      # 自動偵測主機 UID/GID (建議在 .env 中設定 UID=$(id -u))
-      - WANTED_UID=${UID:-1000}
-      - WANTED_GID=${GID:-1000}
-
-      # Bind inside the container; the host port mapping above remains localhost-only.
       - HERMES_WEBUI_HOST=0.0.0.0
       - HERMES_WEBUI_PORT=8787
-
-      # Optional: set HERMES_WEBUI_PASSWORD in .env if you expose this beyond localhost.
-
-      # Bind-mount permission handling (fixes #1389, #1399):
-      #   When you mount an EXISTING ~/.hermes directory (the common case),
-      #   the WebUI's startup credential-permission fixer can clash with
-      #   your host file modes (e.g. 0640 group-readable .env files).
-      #   Set HERMES_SKIP_CHMOD=1 to bypass the fixer entirely, OR set
-      #   HERMES_HOME_MODE=0640 to allow group bits while still stripping
-      #   world-readable. Both are documented in api/startup.py.
-      - HERMES_SKIP_CHMOD=1
-      - HERMES_HOME_MODE=0640
+      - HERMES_WEBUI_BOT_NAME=${HERMES_WEBUI_BOT_NAME:-Gion_守護者}
+      - HERMES_WEBUI_PASSWORD=${HERMES_WEBUI_PASSWORD:-}
+      - WANTED_UID=${UID:-1000}
+      - WANTED_GID=${GID:-1000}
+      - HERMES_SKIP_CHMOD=${HERMES_SKIP_CHMOD:-1}
+      - HERMES_HOME_MODE=${HERMES_HOME_MODE:-0640}
     restart: unless-stopped
