@@ -24,7 +24,7 @@ services:
       # and Linux (/home/<you>/.hermes) — no change needed for standard installs.
       # Only set HERMES_HOME explicitly if your .hermes lives somewhere non-standard.
       # macOS note: set UID and GID below to match your user ID (run `id -u` and `id -g`).
-      - ${HERMES_HOME:-${HOME}/.hermes}:/home/hermeswebui/.hermes
+      - ${HERMES_HOME:-${HOME}/Hermes_Gion_Core}:/home/hermeswebui/.hermes
       # Your workspace directory shown on first launch (adapt if yours is different, the container will use the mounted /workspace)
       - ${HERMES_WORKSPACE:-${HOME}/workspace}:/workspace
     environment:

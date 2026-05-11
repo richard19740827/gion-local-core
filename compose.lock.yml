@@ -1,0 +1,33 @@
+name: gion-local-core
+services:
+  hermes-webui:
+    build:
+      context: /Users/max/gion-local-core
+      dockerfile: Dockerfile
+    environment:
+      HERMES_WEBUI_HOST: 0.0.0.0
+      HERMES_WEBUI_PORT: "8787"
+      HERMES_WEBUI_STATE_DIR: /home/hermeswebui/.hermes/webui
+      WANTED_GID: "1000"
+      WANTED_UID: "1000"
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        host_ip: 127.0.0.1
+        target: 8787
+        published: "8787"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /Users/max/Hermes_Gion_Core
+        target: /home/hermeswebui/.hermes
+        bind: {}
+      - type: bind
+        source: /Users/max/workspace
+        target: /workspace
+        bind: {}
+networks:
+  default:
+    name: gion-local-core_default
