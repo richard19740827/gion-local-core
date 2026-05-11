@@ -4,7 +4,10 @@
 
 COMPOSE_FILE="docker-compose.yml"
 SERVICE="hermes-webui"
-HEALTH_URL="http://127.0.0.1:8787/health"
+SMOKE_PORT="${HERMES_WEBUI_PORT:-8787}"
+HERMES_WEBUI_PORT="$SMOKE_PORT"
+export HERMES_WEBUI_PORT
+HEALTH_URL="http://127.0.0.1:${SMOKE_PORT}/health"
 PROJECT_NAME="hermes-webui-smoke-$$"
 COMPOSE_PROJECT_NAME="$PROJECT_NAME"
 export COMPOSE_PROJECT_NAME
@@ -146,7 +149,7 @@ check_port_free() {
         fail "$HEALTH_URL already responds before smoke; stop the existing service before running smoke"
         exit 1
     fi
-    pass "localhost:8787 is available for isolated smoke"
+    pass "localhost:${SMOKE_PORT} is available for isolated smoke"
 }
 
 make_isolated_dirs() {
