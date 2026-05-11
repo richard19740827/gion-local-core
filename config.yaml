@@ -1,0 +1,50 @@
+# Hermes Agent Configuration
+# 此檔案位於: /Users/max/gion-local-core/config.yaml
+
+# 1. 伺服器設定
+server:
+  host: "0.0.0.0"       # 允許外部訪問 (Docker 內需設 0.0.0.0)
+  port: 8000            # Hermes 後端服務端口
+
+# 2. 路徑設定 (關鍵！)
+# 因為我們在 docker-compose 中將 gion-local-core 掛載為 /home/hermeswebui/.hermes
+# 所以這裡的路徑建議使用相對路徑，或者指向容器內的絕對路徑
+paths:
+  # 技能目錄：相對於 HERMES_HOME
+  skills_dir: "./skills"
+  
+  # 數據庫/記憶目錄
+  data_dir: "./data"
+  
+  # 日誌目錄
+  logs_dir: "./logs"
+
+# 3. 日誌設定
+logging:
+  level: "INFO"         # 除錯時可改為 "DEBUG"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# 4. 核心功能設定
+core:
+  # 是否啟用自動載入技能
+  auto_load_skills: true
+  
+  # 預設語言模型設定 (範例，請依實際需求修改)
+  llm:
+    provider: "openai"  # 或其他支援的提供者
+    model: "gpt-4o"     # 模型名稱
+    # 注意：API Key 建議透過環境變數傳遞，不要直接寫在這裡
+    # 或者在 .env 檔案中設定
+
+# 5. 資料庫設定 (若使用 SQLite)
+database:
+  type: "sqlite"
+  # 資料庫檔案將建立在 data_dir 下
+  filename: "hermes.db"
+
+# 6. WebUI 整合設定 (選用)
+webui:
+  enabled: true
+  # 如果有跨域需求，可在此設定
+  cors_origins:
+    - "http://localhost:8787"
