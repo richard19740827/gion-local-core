@@ -33,14 +33,52 @@ have_cmd() {
 
 check_clean_tree() {
     if ! have_cmd git; then
-        fail "git is required to verify that the working tree is clean"
+        warn "git is not available; skipping working tree cleanliness check"
         return
     fi
 
     if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-        fail "git working tree is not clean"
+        warn "git working tree has local changes; this is expected before committing"
     else
         pass "git working tree is clean"
+    fi
+}
+
+check_required_files() {
+    missing=""
+    for path in \
+        README.md \
+        SPEC.md \
+        VALUES.md \
+        start.sh \
+        bootstrap.py \
+        requirements.txt \
+        docker-compose.yml \
+        .env.example \
+        validate.sh \
+        smoke.sh \
+        .gitignore \
+        archive/README.md \
+        archive/docker/README.md \
+        archive/docker/docker-compose.two-container.yml \
+        archive/docker/docker-compose.three-container.yml \
+        docs/gion-local-core-v26.md
+    do
+        if [ ! -f "$path" ]; then
+            missing="$missing $path"
+        fi
+    done
+
+    if [ -n "$missing" ]; then
+        fail "required files are missing:$missing"
+    else
+        pass "all required canonical and archive files exist"
+    fi
+
+    if [ -e "archive " ] || [ -e "archive/docker " ] || [ -e "archive /docker " ]; then
+        fail "archive directories must not contain trailing spaces"
+    else
+        pass "archive directory names are canonical"
     fi
 }
 
@@ -254,17 +292,36 @@ check_start_uses_bootstrap() {
     fi
 }
 
-check_ctl_uses_bootstrap() {
-    if [ ! -f ctl.sh ]; then
-        fail "ctl.sh is missing"
-        return
+check_repo_path_documentation() {
+    if awk '
+        /git clone .*hermes-webui/ { bad = 1; print FILENAME ":" FNR }
+        END { exit bad ? 0 : 1 }
+    ' README.md docs/*.md 2>/dev/null; then
+        fail "documentation still tells users to clone hermes-webui instead of gion-local-core"
+    else
+        pass "documentation names gion-local-core as the launcher/config repo"
     fi
 
-    if awk 'BEGIN { found = 0 } /^[[:space:]]*#/ { next } /bootstrap\.py/ { found = 1 } END { exit found ? 0 : 1 }' ctl.sh; then
-        pass "ctl.sh startup path references bootstrap.py"
+    if awk '
+        /HERMES_WEBUI_SOURCE_DIR/ { found = 1 }
+        END { exit found ? 0 : 1 }
+    ' .env.example README.md docs/docker.md; then
+        pass "host-side WebUI source override is documented"
     else
-        fail "ctl.sh startup path does not reference bootstrap.py"
+        fail "HERMES_WEBUI_SOURCE_DIR is not documented for host-side start.sh use"
     fi
+}
+
+check_root_wrappers() {
+    for path in validate.sh smoke.sh; do
+        if [ ! -x "$path" ]; then
+            fail "$path is missing or not executable"
+        elif awk 'BEGIN { found = 0 } /^[[:space:]]*#/ { next } /scripts\// { found = 1 } END { exit found ? 0 : 1 }' "$path"; then
+            pass "$path delegates to scripts/ implementation"
+        else
+            fail "$path does not delegate to scripts/ implementation"
+        fi
+    done
 }
 
 print_summary() {
@@ -289,6 +346,7 @@ print_summary() {
 }
 
 check_clean_tree
+check_required_files
 check_required_commands
 check_python_syntax
 check_compose_render
@@ -296,6 +354,7 @@ check_duplicate_env
 check_placeholder_password
 check_no_root_compose_variants
 check_start_uses_bootstrap
-check_ctl_uses_bootstrap
+check_repo_path_documentation
+check_root_wrappers
 
 print_summary
