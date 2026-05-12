@@ -85,6 +85,117 @@ If after running steps 1-4 the import still fails *and* `pip install -e .` succe
 
 ---
 
+## 數位蓮花：訊息閘道打不開
+
+**症狀。** WebUI 可以在瀏覽器打開，但是 Telegram / Discord / Slack 沒有回應；控制中心的 Gateway 卡片顯示尚未設定；或你不知道 Hermes 真正讀到的是哪一個 `config.yaml`。
+
+**先記住一句話。** WebUI 只是看得到對話；真正讓 Telegram / Discord / Slack 活起來的是 Hermes Agent 的 messaging gateway。也就是說，要先確認 Agent 的家目錄、設定檔、密鑰、gateway 程序都指向同一個地方。
+
+### 第 1 步 — 找到 Hermes 真正使用的設定檔
+
+在 macOS 或 Linux 終端機執行：
+
+```bash
+printf 'HERMES_HOME=%s\n' "${HERMES_HOME:-$HOME/.hermes}"
+printf 'HERMES_CONFIG_PATH=%s\n' "${HERMES_CONFIG_PATH:-${HERMES_HOME:-$HOME/.hermes}/config.yaml}"
+ls -la "${HERMES_HOME:-$HOME/.hermes}"
+```
+
+重點只看兩個值：
+
+- `HERMES_HOME`：Hermes 的家目錄，通常是 `~/.hermes`。
+- `HERMES_CONFIG_PATH`：Hermes 真的會讀的設定檔，通常是 `~/.hermes/config.yaml`。
+
+如果你用 Docker 跑 WebUI，也要進容器確認同一份設定檔存在：
+
+```bash
+docker exec hermes-webui ls -la /home/hermeswebui/.hermes/config.yaml
+docker exec hermes-webui sed -n '1,220p' /home/hermeswebui/.hermes/config.yaml
+```
+
+### 第 2 步 — 不要把 Bot token 放進截圖或 git
+
+Bot token 請放在 `.env` 或 shell 環境變數，不要直接寫進會提交的 YAML：
+
+```bash
+cat >> ~/.hermes/.env <<'EOF_ENV'
+TELEGRAM_BOT_TOKEN=123456:replace-me
+TELEGRAM_ALLOWED_CHAT_IDS=123456789
+EOF_ENV
+chmod 600 ~/.hermes/.env
+```
+
+分享畫面、log、截圖之前，請遮掉 `TELEGRAM_BOT_TOKEN`、`DISCORD_BOT_TOKEN`、`SLACK_BOT_TOKEN`、API key、資料庫網址與 webhook 網址。
+
+### 第 3 步 — 在 Agent 設定檔裡打開通道
+
+不同 Hermes Agent 版本的欄位名稱可能不同；如果你的版本有自己的 gateway / channel 文件，請以 Agent 文件為準。常見概念如下：在 YAML 裡啟用通道，但秘密值只用環境變數名稱引用。
+
+```yaml
+messaging:
+  telegram:
+    enabled: true
+    token_env: TELEGRAM_BOT_TOKEN
+    allowed_chat_ids_env: TELEGRAM_ALLOWED_CHAT_IDS
+```
+
+如果你的 Agent 使用 `gateway:` 或 `channels:`，原則仍相同：YAML 只負責「打開 Telegram」，真正的 token 留在 `.env` 或系統環境變數。
+
+### 第 4 步 — 從同一個環境啟動或重啟 gateway
+
+請在已經載入 `HERMES_HOME` 與 token 的同一個 shell 執行：
+
+```bash
+set -a
+[ -f ~/.hermes/.env ] && . ~/.hermes/.env
+set +a
+hermes gateway start
+```
+
+如果你用 Docker Compose，請重啟擁有 Hermes Agent / gateway 的服務，然後看 log：
+
+```bash
+docker compose restart hermes-webui
+docker logs -f hermes-webui
+```
+
+### 第 5 步 — 確認 WebUI 看得到 gateway
+
+打開 Control Center → System，看 Gateway status 卡片。也可以直接查 API：
+
+```bash
+curl -s http://127.0.0.1:8787/api/gateway/status
+```
+
+判讀方式：
+
+1. `configured: false`：WebUI 還找不到 Agent gateway metadata。
+2. `configured: true, running: false`：設定資料存在，但 gateway 停了或狀態過期。
+3. `configured: true, running: true`：gateway 程序活著。
+4. `platforms`：通常要等 gateway 寫入 session 或身份 metadata 後，才會列出 Telegram / Discord / Slack。
+
+### 很累時的最短恢復清單
+
+如果你現在只想讓「數位蓮花」先開起來，照順序跑這四段：
+
+```bash
+# 1) 確認目前的 home/config。
+printf 'home=%s\nconfig=%s\n' "${HERMES_HOME:-$HOME/.hermes}" "${HERMES_CONFIG_PATH:-${HERMES_HOME:-$HOME/.hermes}/config.yaml}"
+
+# 2) 確認 token 已載入，但不要把 token 印出來。
+test -n "$TELEGRAM_BOT_TOKEN" && echo 'telegram token loaded'
+
+# 3) 確認 WebUI 可連線。
+curl -fsS http://127.0.0.1:8787/api/system/health >/dev/null && echo 'webui ok'
+
+# 4) 確認 gateway 狀態。
+curl -s http://127.0.0.1:8787/api/gateway/status
+```
+
+如果第 2 步失敗，重新載入 `~/.hermes/.env`。如果第 3 步失敗，先啟動 WebUI。如果第 4 步顯示 gateway 未設定，請回頭檢查 `HERMES_HOME`、`HERMES_CONFIG_PATH`，以及 Agent / gateway 是否真的從同一個 home 目錄啟動。
+
+---
+
 ## "Messaging gateway channel not opening"
 
 **Symptom.** WebUI works in the browser, but Telegram/Discord/Slack feels like a hidden "channel switch": the bot does not answer, the Control Center gateway card says the gateway is not configured, or you are not sure which `config.yaml` Hermes is reading.
