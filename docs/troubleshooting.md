@@ -85,6 +85,112 @@ If after running steps 1-4 the import still fails *and* `pip install -e .` succe
 
 ---
 
+## "Messaging gateway channel not opening"
+
+**Symptom.** WebUI works in the browser, but Telegram/Discord/Slack feels like a hidden "channel switch": the bot does not answer, the Control Center gateway card says the gateway is not configured, or you are not sure which `config.yaml` Hermes is reading.
+
+**Why it happens.** WebUI can display messaging sessions, but the messaging gateway is owned by Hermes Agent. It reads the Agent config under `HERMES_HOME`, writes gateway runtime metadata there, and only then can WebUI show `/api/gateway/status` as configured/running. A repo-level `config.yaml` is only a sample/local development file unless `HERMES_CONFIG_PATH` points at it.
+
+### Step 1 — find the config Hermes is actually using
+
+On macOS or Linux, start with the active environment instead of searching every random config file in Finder:
+
+```bash
+printf 'HERMES_HOME=%s\n' "${HERMES_HOME:-$HOME/.hermes}"
+printf 'HERMES_CONFIG_PATH=%s\n' "${HERMES_CONFIG_PATH:-${HERMES_HOME:-$HOME/.hermes}/config.yaml}"
+ls -la "${HERMES_HOME:-$HOME/.hermes}"
+```
+
+If WebUI runs in Docker, verify the file inside the container too:
+
+```bash
+docker exec hermes-webui ls -la /home/hermeswebui/.hermes/config.yaml
+docker exec hermes-webui sed -n '1,220p' /home/hermeswebui/.hermes/config.yaml
+```
+
+### Step 2 — keep secrets out of screenshots and git
+
+Put bot tokens in `.env` or your shell environment, not directly in committed YAML:
+
+```bash
+cat >> ~/.hermes/.env <<'EOF_ENV'
+TELEGRAM_BOT_TOKEN=123456:replace-me
+TELEGRAM_ALLOWED_CHAT_IDS=123456789
+EOF_ENV
+chmod 600 ~/.hermes/.env
+```
+
+Before sharing logs or screenshots, redact values named like `TELEGRAM_BOT_TOKEN`, `DISCORD_BOT_TOKEN`, `SLACK_BOT_TOKEN`, provider API keys, database URLs, and webhook URLs.
+
+### Step 3 — turn on the channel in the Agent config
+
+The exact schema is owned by Hermes Agent, so check your Agent version's channel or gateway docs first. A typical config keeps channel enablement in the Agent config and secrets in environment variables:
+
+```yaml
+messaging:
+  telegram:
+    enabled: true
+    token_env: TELEGRAM_BOT_TOKEN
+    allowed_chat_ids_env: TELEGRAM_ALLOWED_CHAT_IDS
+```
+
+If your Agent uses a `gateway:` or `channels:` key instead, keep the same principle: enable Telegram in YAML, reference secret names, and store the secret values outside git.
+
+### Step 4 — start or restart the gateway
+
+From the same shell that has `HERMES_HOME` and the token environment loaded:
+
+```bash
+set -a
+[ -f ~/.hermes/.env ] && . ~/.hermes/.env
+set +a
+hermes gateway start
+```
+
+If your installation uses Docker Compose, restart the service that owns Hermes Agent/gateway, then watch logs:
+
+```bash
+docker compose restart hermes-webui
+docker logs -f hermes-webui
+```
+
+### Step 5 — confirm WebUI can see the gateway
+
+Open Control Center → System and check the Gateway status card. You can also query the API directly:
+
+```bash
+curl -s http://127.0.0.1:8787/api/gateway/status
+```
+
+Expected progression:
+
+1. `configured: false` means WebUI cannot find Agent gateway metadata yet.
+2. `configured: true, running: false` means metadata exists but the gateway is stopped or stale.
+3. `configured: true, running: true` means the gateway process is alive.
+4. `platforms` lists Telegram/Discord/Slack only after sessions or identity metadata have been written by the gateway.
+
+### Fast recovery checklist
+
+When you are tired and just need the channel open, run this checklist in order:
+
+```bash
+# 1) Confirm the active home/config.
+printf 'home=%s\nconfig=%s\n' "${HERMES_HOME:-$HOME/.hermes}" "${HERMES_CONFIG_PATH:-${HERMES_HOME:-$HOME/.hermes}/config.yaml}"
+
+# 2) Confirm the token is present without printing it.
+test -n "$TELEGRAM_BOT_TOKEN" && echo 'telegram token loaded'
+
+# 3) Confirm WebUI is reachable.
+curl -fsS http://127.0.0.1:8787/api/system/health >/dev/null && echo 'webui ok'
+
+# 4) Confirm gateway status.
+curl -s http://127.0.0.1:8787/api/gateway/status
+```
+
+If step 2 fails, reload `~/.hermes/.env`. If step 3 fails, start WebUI. If step 4 says the gateway is not configured, focus on `HERMES_HOME`, `HERMES_CONFIG_PATH`, and whether the Agent/gateway process is running from that same home directory.
+
+---
+
 ## Other troubleshooting
 
 This document grows over time. If a recurring failure mode isn't covered here yet, add it via PR. The format for each entry: **Symptom → Why → Diagnostic commands → Fix → When to file a bug**.
