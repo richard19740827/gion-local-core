@@ -3703,3 +3703,27 @@ main.main.showing-logs > #mainLogs{display:flex;}
 .log-line-debug{color:var(--muted);opacity:.75;}
 .logs-empty,.logs-hint{margin:8px 14px;padding:12px;border:1px solid var(--border);border-radius:8px;color:var(--muted);background:var(--surface);white-space:normal;font-family:var(--font-ui,system-ui,sans-serif);font-size:12px;}
 .logs-hint.warn{color:#f59e0b;border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08);}
+
+/* Digital lotus: a quiet, accessible welcome mark for the empty chat state. */
+.empty-logo.digital-lotus{
+  width:76px;
+  height:76px;
+  border-radius:28px;
+  color:var(--accent);
+  background:
+    radial-gradient(circle at 50% 38%,rgba(255,255,255,.5),transparent 30%),
+    linear-gradient(145deg,var(--accent-bg),rgba(125,211,252,.14));
+  border:1px solid var(--accent-bg-strong);
+  box-shadow:0 10px 34px rgba(124,58,237,.18),0 0 48px var(--accent-bg);
+  overflow:hidden;
+}
+.empty-logo.digital-lotus svg{display:block;filter:drop-shadow(0 8px 18px rgba(56,189,248,.16));}
+.digital-lotus__aura{transform-origin:48px 48px;animation:lotusAura 5.6s ease-in-out infinite;}
+.digital-lotus__flower{transform-origin:48px 62px;animation:lotusBloom 6.8s ease-in-out infinite;}
+.digital-lotus__grid{animation:lotusSignal 4.8s ease-in-out infinite;}
+@keyframes lotusAura{0%,100%{transform:scale(.96);opacity:.72}50%{transform:scale(1.05);opacity:1}}
+@keyframes lotusBloom{0%,100%{transform:translateY(1px) scale(.985)}50%{transform:translateY(-1px) scale(1.015)}}
+@keyframes lotusSignal{0%,100%{opacity:.22}50%{opacity:.44}}
+@media (prefers-reduced-motion: reduce){
+  .digital-lotus__aura,.digital-lotus__flower,.digital-lotus__grid{animation:none;}
+}
